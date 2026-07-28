@@ -1,0 +1,31 @@
+# Render 배포 설계도 (Blueprint)
+#
+# GitHub 저장소를 Render에 연결하면 이 파일을 읽어 자동으로 서비스를 만든다.
+# 무료 요금제로 시작할 수 있고, 나중에 필요하면 유료로 올리면 된다.
+#
+# 무료 요금제 주의:
+#   15분간 아무도 안 쓰면 서버가 잠든다. 다시 부르면 30초쯤 걸려 깨어난다.
+#   파일럿 용도로는 문제없지만, 주민에게 공개할 단계에서는 유료로 올리는 것이 좋다.
+
+services:
+  - type: web
+    name: dongne-pyeongsaeng
+    runtime: python
+    plan: free
+    region: singapore          # 한국에서 가장 가까운 지역
+    buildCommand: pip install -r requirements.txt
+    startCommand: python server.py
+    envVars:
+      - key: MCP_TRANSPORT
+        value: http            # 원격 접속 모드로 실행
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: DPS_CACHE_TTL
+        value: "600"           # 같은 질의 10분간 재사용 (기관 서버 부담 완화)
+      - key: DPS_ROWS
+        value: "100"           # 1회 요청당 강좌 수
+      # 대구 API는 나중에 붙여도 된다. Render 대시보드에서 값만 채우면 됨.
+      - key: DAEGU_API_KEY
+        sync: false
+      - key: DAEGU_API_URL
+        sync: false
