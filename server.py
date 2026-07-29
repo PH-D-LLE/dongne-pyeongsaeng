@@ -38,11 +38,35 @@ from sources import (
     search_notices,
 )
 
+from mcp.server.transport_security import TransportSecuritySettings
+
+# MCP SDK는 DNS 리바인딩 공격을 막으려고 Host 헤더를 검사한다.
+# 기본값이 localhost 계열만 허용이라, 인터넷에 올리면 '421 Invalid Host header'가 뜬다.
+# 와일드카드('*')는 지원하지 않고 정확한 도메인만 받는다.
+#
+#   ALLOWED_HOSTS 를 지정하면  → 그 도메인만 허용 (권장)
+#   지정하지 않으면            → 검사를 끈다
+#
+# 이 보호 장치는 원래 '내 PC에서 도는 서버를 악성 웹사이트가 부르는 것'을 막기 위한 것이라,
+# HTTPS로 공개된 조회 전용 서버에서는 실익이 크지 않다. 다만 도메인이 정해져 있다면
+# ALLOWED_HOSTS 를 넣어 두는 편이 낫다.
+_hosts = [h.strip() for h in os.environ.get("ALLOWED_HOSTS", "").split(",") if h.strip()]
+
+if _hosts:
+    _security = TransportSecuritySettings(
+        enable_dns_rebinding_protection=True,
+        allowed_hosts=_hosts,
+        allowed_origins=["*"],
+    )
+else:
+    _security = TransportSecuritySettings(enable_dns_rebinding_protection=False)
+
 mcp = FastMCP(
     "dongne-pyeongsaeng",
     # 원격(HTTP)으로 띄울 때를 대비한 설정.
     # 세션을 서버에 쌓아 두지 않아야 무료 호스팅·프록시 환경에서 안정적이다.
     stateless_http=True,
+    transport_security=_security,
 )
 
 _gj = GyeongjuSource()
